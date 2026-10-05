@@ -624,6 +624,29 @@ body {
   display: none;
 }
 
+.deco .options.two-rows {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.deco .options .row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex: 0 0 auto;
+}
+
+.deco .options.two-rows .swatch {
+  width: 54px;
+  height: 54px;
+}
+
+.deco .options.two-rows .tile {
+  width: 76px;
+  height: 58px;
+}
+
 .swatch {
   position: relative;
   flex: 0 0 auto;
@@ -970,7 +993,7 @@ body {
 .burst {
   position: absolute;
   left: 50%;
-  top: 38%;
+  top: 24%;
   transform: translate(-50%, -50%);
   display: flex;
   align-items: center;
@@ -978,7 +1001,7 @@ body {
   padding: 14px 30px 14px 18px;
   border-radius: 999px;
   background: var(--panel-strong);
-  font-size: 54px;
+  font-size: 46px;
   font-weight: 900;
   box-shadow: 0 0 0 4px var(--yellow), 0 16px 40px rgba(0, 0, 0, 0.45);
   animation: burstIn 0.5s cubic-bezier(0.2, 1.6, 0.4, 1);

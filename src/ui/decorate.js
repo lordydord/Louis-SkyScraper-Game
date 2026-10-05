@@ -129,6 +129,7 @@ export class DecorateBar {
   render() {
     const o = this.options;
     o.innerHTML = '';
+    o.classList.remove('two-rows');
     const deco = this.getDeco();
     if (this.tab === 'wall' || this.tab === 'glass') {
       const list = this.tab === 'wall' ? WALL_COLOURS : GLASS_COLOURS;
@@ -143,6 +144,11 @@ export class DecorateBar {
         o.appendChild(s);
       });
     } else if (this.tab === 'lights') {
+      // Two rows: light-show patterns on top, colours underneath.
+      o.classList.add('two-rows');
+      const row1 = el('div', 'row');
+      const row2 = el('div', 'row');
+      o.append(row1, row2);
       const light = deco.light || { c: 0, p: 'off' };
       LIGHT_PATTERNS.forEach((p) => {
         const t = el('div', 'tile tap', patternSvg(p, LIGHT_COLOURS[light.c] ?? 0xffffff) + this._price('light:' + p, LIGHT_PRICES[p]));
@@ -153,12 +159,8 @@ export class DecorateBar {
           this.onChange({ light: { ...light, p } });
           this.render();
         });
-        o.appendChild(t);
+        row1.appendChild(t);
       });
-      const gap = el('div');
-      gap.style.width = '12px';
-      gap.style.flex = '0 0 auto';
-      o.appendChild(gap);
       LIGHT_COLOURS.forEach((c, i) => {
         const s = el('div', `swatch tap ${c === -1 ? 'rainbow' : ''}`);
         if (c !== -1) s.style.background = hex(c);
@@ -168,7 +170,7 @@ export class DecorateBar {
           this.onChange({ light: { c: i, p } });
           this.render();
         });
-        o.appendChild(s);
+        row2.appendChild(s);
       });
     } else if (this.tab === 'roof') {
       const ex = deco.extras || {};

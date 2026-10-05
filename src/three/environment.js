@@ -513,8 +513,12 @@ export class Environment {
 
   _buildBodies() {
     for (const b of this.bodies) {
-      b.mesh.parent.remove(b.mesh);
-      if (b.glow) b.glow.parent.remove(b.glow);
+      for (const m of [b.mesh, b.glow]) {
+        if (!m) continue;
+        m.parent.remove(m);
+        m.geometry.dispose();
+        m.material.dispose();
+      }
     }
     this.bodies = [];
     const objects = SKY_OBJECTS[this.world] || [];
