@@ -82,6 +82,7 @@ export class CityScreen {
   }
 
   exit() {
+    this.dead = true;
     this.app.tape.hide();
     this.app.ghosts.clear();
     this.app.ghosts.enabled = false;
@@ -315,7 +316,7 @@ export class CityScreen {
     this.inventory.glow(red && this.store.isUnlocked('damper') ? ['damper'] : this._tutGlow || []);
   }
 
-  _commit(newTower, { dropIndex = -1, select = null, sound = null } = {}) {
+  _commit(newTower, { dropIndex = -1, select = null, sound = null, progress = true } = {}) {
     const prevH = towerHeight(this.tower);
     this.history.push(this.tower);
     if (this.history.length > 60) this.history.shift();
@@ -327,7 +328,7 @@ export class CityScreen {
     this.tv.setSelected(this.selected);
     this._refreshBuildHud();
     this._frameTower(false);
-    this._progress(prevH, towerHeight(newTower));
+    if (progress) this._progress(prevH, towerHeight(newTower));
     if (sound) sound();
   }
 
@@ -360,6 +361,7 @@ export class CityScreen {
     this.tv.swingCrane();
     this._commit(res.tower, { dropIndex: res.index, select: res.index });
     setTimeout(() => {
+      if (this.dead || !this.tv) return;
       app.audio.place();
       const top = this.tv.group.position.clone();
       const lay = layout(this.tower);
@@ -464,7 +466,8 @@ export class CityScreen {
       if (d.changed) {
         const t = this.tower;
         this.tower = d.tower0;
-        this._commit(t);
+        // Celebrations already happened live while dragging.
+        this._commit(t, { progress: false });
         this.store.markTutorial('stretch');
         this._tutorial();
       }
@@ -575,9 +578,9 @@ export class CityScreen {
     app.audio.cheer();
     const top = this.tv.group.position.clone().setY(H);
     app.effects.confettiBurst(top, Math.max(30, H * 0.12));
-    setTimeout(() => this._showTape(true), 700);
+    setTimeout(() => !this.dead && this._showTape(true), 700);
     app.voice.say(`Your tower is ${spokenMetres(Math.round(H)).replace(/!$/, '')} tall!`, { important: true });
-    setTimeout(() => this.enterDecorate(), 4200);
+    setTimeout(() => !this.dead && this.enterDecorate(), 4200);
   }
 
   enterDecorate() {
@@ -626,6 +629,7 @@ export class CityScreen {
     const base = this.tv.group.position;
     for (let i = 0; i < 5; i++) {
       setTimeout(() => {
+        if (this.dead) return;
         const p = base.clone().add(new THREE.Vector3((Math.random() - 0.5) * H * 0.6, H * (0.85 + Math.random() * 0.4), (Math.random() - 0.5) * H * 0.6));
         app.effects.firework(p, Math.max(20, H * 0.12));
         app.audio.firework();
@@ -670,7 +674,7 @@ export class CityScreen {
     this.selected = -1;
     // Pull back to watch the city grow around the new tower.
     setTimeout(() => {
-      if (this.mode !== 'celebrate') return;
+      if (this.dead || this.mode !== 'celebrate') return;
       this.enterView({ fly: true, focus: done });
     }, 2600);
   }

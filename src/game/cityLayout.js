@@ -17,7 +17,7 @@ export const LAYOUTS = {
     parks: [{ block: [0, 1], lake: true }],
     // The sea (Persian Gulf) to the north.
     water: [{ x0: -60, x1: 60, z0: -60, z1: -4.5 }],
-    fill: { radius: 4, minH: 30, maxH: 300, styles: ['glass', 'glass', 'glass', 'filler', 'twist', 'round', 'burj'], palms: true },
+    fill: { radius: 4, minH: 30, maxH: 300, styles: ['glass', 'glass', 'glass', 'glass', 'filler', 'filler', 'round', 'twist'], palms: true },
   },
   newyork: {
     landmarks: [

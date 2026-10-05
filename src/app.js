@@ -46,18 +46,41 @@ export class App {
     this.rig.onDoubleTap = (x, y) => this.screen?.onTap?.(x, y);
     this.rig.onInteract = () => this.screen?.onInteract?.();
     this.engine.onFrame((dt) => this.frame(dt));
-    // Any first touch unlocks sound (browsers need a tap before playing audio).
-    window.addEventListener('pointerdown', () => this.audio.unlock(), { once: true });
+    // Touches unlock sound and speech (iPad Safari needs a tap first, and may pause
+    // audio when the app goes to the background).
+    const unlock = () => {
+      this.audio.unlock();
+      this.voice.unlock();
+    };
+    for (const ev of ['touchend', 'click', 'pointerup']) window.addEventListener(ev, unlock, { capture: true, passive: true });
     document.addEventListener('gesturestart', (e) => e.preventDefault());
     document.addEventListener('dblclick', (e) => e.preventDefault());
   }
 
-  start() {
-    // Render a first frame behind the splash, then reveal.
+  async start() {
     this.showTitle();
+    // Compile the 3D shaders behind the splash screen so the first seconds are smooth.
+    // (One update first, so lights and the reflection map exist when compiling.)
+    const r = this.engine.renderer;
+    this.rig.update(0.016);
+    this.env.update(0.016, this.engine.camera);
+    try {
+      if (r.compileAsync) {
+        await Promise.race([
+          Promise.all([
+            r.compileAsync(this.engine.scene, this.engine.camera),
+            r.compileAsync(this.env.skyScene, this.env.skyCamera),
+            r.compileAsync(this.env.planetScene, this.env.planetCamera),
+          ]),
+          new Promise((resolve) => setTimeout(resolve, 6000)),
+        ]);
+      }
+    } catch (e) {
+      console.warn('shader warm-up skipped', e);
+    }
     this.engine.start();
     navigator.storage?.persist?.();
-    setTimeout(() => document.getElementById('splash')?.classList.add('gone'), 600);
+    setTimeout(() => document.getElementById('splash')?.classList.add('gone'), 400);
   }
 
   setScreen(s) {
@@ -89,7 +112,13 @@ export class App {
           ? this.city.plotPosition(lm.block).setY(H * 0.45)
           : new THREE.Vector3(0, H * 0.45, 0);
       this.rig.maxDist = 1e6;
-      this.rig.flyTo({ target, dist: H * 1.9 + 600, el: 0.2, duration: 1.5 });
+      if (this._backdropShown) this.rig.flyTo({ target, dist: H * 1.4 + 450, el: 0.16, duration: 1.5 });
+      else {
+        // The very first view: start right there, no flying in.
+        this._backdropShown = true;
+        this.rig.setGoal({ target, dist: H * 1.4 + 450, el: 0.16 });
+        this.rig.snap();
+      }
     }
     this.rig.autoSpin = 0.05;
   }

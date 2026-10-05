@@ -59,7 +59,7 @@ async function drag(from, to, steps = 12) {
 }
 
 await page.goto(base + '/?nosw', { waitUntil: 'load' });
-await shot('title', 3500);
+await shot('title', 9000);
 await tapEl('.title-play');
 await shot('picker', 1500);
 await tapEl('.card.new');

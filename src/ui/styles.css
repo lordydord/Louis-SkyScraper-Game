@@ -436,6 +436,11 @@ body {
   display: none;
 }
 
+.inv-scroll {
+  -webkit-mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 46px), transparent);
+  mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 46px), transparent);
+}
+
 .inv-scroll .track {
   display: flex;
   gap: 8px;

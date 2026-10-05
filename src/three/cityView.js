@@ -555,7 +555,7 @@ export class CityView {
         i2 = push(s.c - hw, bb, 1, len);
         i3 = push(s.c + hw, bb, 0, len);
       }
-      idx.push(i0, i2, i1, i0, i3, i2);
+      idx.push(i0, i1, i2, i0, i2, i3);
     }
     // Junction squares (plain tarmac).
     const corners = new Set();

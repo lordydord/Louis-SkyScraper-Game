@@ -141,7 +141,7 @@ export class AudioEngine {
   // ---------- sound effects ----------
 
   place() {
-    this._tone({ freq: 150, freq2: 62, dur: 0.32, vol: 0.5, attack: 0.006 });
+    this._tone({ freq: 150, freq2: 62, dur: 0.32, vol: 0.36, attack: 0.01 });
     this._noise({ dur: 0.22, vol: 0.14, freq: 700, freq2: 200, attack: 0.004 });
     this._tone({ freq: midi(76), dur: 0.25, vol: 0.06, when: 0.05, type: 'triangle' });
   }

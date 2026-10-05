@@ -36,7 +36,7 @@ export function officeBlock(b, rng, x, z, w, d, h, styleName) {
   const ys = [];
   for (let r = 0; r <= rows; r++) ys.push((h * r) / rows);
   if (styleName === 'twist') {
-    const rings = ys.map((y) => rotateRing(ring, (y / 120) * 0.9));
+    const rings = ys.map((y) => rotateRing(ring, (y / 220) * 0.55));
     b.loft(rings, ys, { cellW, cx: x, cz: z });
     b.set({ kind: KIND.ROOF });
     b.cap(rings[rings.length - 1], h, 1, x, z);

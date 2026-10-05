@@ -202,8 +202,11 @@ export function flyCoins(parent, from, to, count, onEach) {
 }
 
 // A big friendly pop-up in the middle (e.g. a famous building and its height).
+let lastBurst = null;
 export function burst(parent, html, ms = 2600) {
+  if (lastBurst) lastBurst.remove();
   const b = el('div', 'burst', html);
+  lastBurst = b;
   parent.appendChild(b);
   setTimeout(() => {
     b.animate([{ opacity: 1 }, { opacity: 0, transform: 'translate(-50%,-60%) scale(0.9)' }], { duration: 400, fill: 'forwards' }).onfinish =
