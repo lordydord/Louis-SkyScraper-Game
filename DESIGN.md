@@ -89,6 +89,15 @@ the game.
 - **His skyline**: every finished tower side by side, tallest first, with heights.
 - **Photo cards**: a picture of each tower with its height and the coins it earned.
 
+## Small extras added while building
+
+- First time passing each famous building gives a few bonus coins.
+- "Your tallest tower ever!" trophy moment when a finished tower beats his record.
+- Very tall towers (km high, up to space) get a glowing golden line and a star on top,
+  so they stay visible when the camera is far away; mountains, clouds, aeroplanes, the
+  edge of space and the Space Station are shown as glowing height rings with pictures.
+- The first light show glides the sky into night so the lights can be seen.
+
 ## Name and hosting
 
 - Title: **Louie's Sky City**.

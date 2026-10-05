@@ -642,6 +642,9 @@ export class CityScreen {
     if (this.mode !== 'decorate') return;
     const H = towerHeight(this.tower);
     const coins = finishCoins(H);
+    // A new personal record? (taller than every tower he's finished before)
+    const others = this.store.finishedTowers().filter((t) => t.id !== this.tower.id);
+    const record = others.length > 0 && H > Math.max(...others.map((t) => towerHeight(t)));
     this.tower = { ...this.tower, done: true };
     this.store.putTower(this.tower);
     this.store.finishTower(this.tower.id, coins);
@@ -668,6 +671,14 @@ export class CityScreen {
     });
     this._takePhoto(this.tower, this.tv);
     this._scheduleBubble(this.tower.id, 25);
+    if (record) {
+      setTimeout(() => {
+        if (this.dead) return;
+        burst(this.ui, `<span style="color:#ffcf3f">${icon('trophy')}</span><span>${formatNumber(H)} m</span>`, 3200);
+        app.audio.milestone();
+        app.voice.say('Your tallest tower ever! A new record!');
+      }, 2200);
+    }
     const done = this.tv;
     this.tower = null;
     this.tv = null;
