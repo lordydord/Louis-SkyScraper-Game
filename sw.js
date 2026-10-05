@@ -3,7 +3,7 @@
 // A new version downloads in the background and is used the next time the game
 // is opened (it never swaps files in the middle of a game).
 
-const VERSION = 'sky-city-38cf06229d';
+const VERSION = 'sky-city-212921bdc1';
 // FILES-START
 const FILES = [
   './',

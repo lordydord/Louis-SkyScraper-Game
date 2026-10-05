@@ -6,7 +6,8 @@ import { clamp, damp, easeInOutCubic, lerp } from '../util/math.js';
 //   pinch            -> zoom in and out
 //   two finger drag  -> move up and down the tower
 //   tap              -> onTap(x, y)
-// Mouse works too (drag, wheel) for testing on a computer.
+// On a computer: drag to spin, scroll or pinch the trackpad to zoom, swipe the
+// trackpad sideways to spin, and right-drag (or Shift + drag) to move up and down.
 
 const TAP_MOVE = 10;
 const TAP_TIME = 380;
@@ -44,12 +45,23 @@ export class CameraRig {
     el.addEventListener('pointermove', (e) => this._move(e));
     el.addEventListener('pointerup', (e) => this._up(e));
     el.addEventListener('pointercancel', (e) => this._up(e, true));
+    el.addEventListener('contextmenu', (e) => e.preventDefault());
     el.addEventListener(
       'wheel',
       (e) => {
         e.preventDefault();
         if (!this.enabled) return;
-        this.goal.dist = clamp(this.goal.dist * Math.exp(e.deltaY * 0.0012), this.minDist, this.maxDist);
+        const unit = e.deltaMode === 1 ? 16 : 1;
+        const dx = e.deltaX * unit;
+        const dy = e.deltaY * unit;
+        if (Math.abs(dx) > Math.abs(dy) && !e.ctrlKey) {
+          // Trackpad swipe sideways: spin around.
+          this.goal.az += dx * 0.004;
+        } else {
+          // Scroll wheel, trackpad scroll, or trackpad pinch (ctrlKey): zoom.
+          const k = e.ctrlKey ? 0.01 : 0.0012;
+          this.goal.dist = clamp(this.goal.dist * Math.exp(dy * k), this.minDist, this.maxDist);
+        }
         this._touched();
       },
       { passive: false },
@@ -66,7 +78,9 @@ export class CameraRig {
     this.dom.setPointerCapture?.(e.pointerId);
     this._pointers.set(e.pointerId, { x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY, t: performance.now() });
     if (this._pointers.size === 1) {
-      this._gesture = { type: 'maybeTap', moved: 0 };
+      // Right mouse button or Shift + drag moves up and down the tower.
+      const pan = e.pointerType === 'mouse' && (e.button === 2 || e.shiftKey);
+      this._gesture = pan ? { type: 'pan' } : { type: 'maybeTap', moved: 0 };
     } else if (this._pointers.size === 2) {
       const [a, b] = [...this._pointers.values()];
       this._gesture = {
@@ -95,6 +109,10 @@ export class CameraRig {
         const k = 0.0062;
         this.goal.az -= dx * k;
         this.goal.el = clamp(this.goal.el + dy * k * 0.8, this.minEl, this.maxEl);
+        this._touched();
+      } else if (g.type === 'pan') {
+        const worldPerPx = (2 * this.cur.dist * Math.tan((this.camera.fov * Math.PI) / 360)) / this.dom.clientHeight;
+        this.goal.target.y = clamp(this.goal.target.y + dy * worldPerPx, this.minTargetY, this.maxTargetY);
         this._touched();
       }
     } else if (this._pointers.size === 2 && g.type === 'pinch') {

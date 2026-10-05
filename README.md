@@ -57,7 +57,11 @@ No build step: it's plain JavaScript modules plus [three.js](https://threejs.org
 npm test                 # unit tests for the game logic (Node 20+)
 npm run serve            # http://localhost:8080
 node tools/build-sw.mjs  # refresh the offline file list after changing files
+node tools/build-single-page.mjs out.html   # whole game in one page (three.js from a CDN)
 ```
+
+On a computer: drag to spin around, scroll (or pinch the trackpad) to zoom, swipe the
+trackpad sideways to spin, and right-drag or Shift + drag to move up and down the tower.
 
 - `src/game/`: rules (tower model, wobble physics, coins, saving) and screens
 - `src/three/`: 3D rendering (sky, buildings, city, landmarks, effects)

@@ -1,4 +1,4 @@
-import { el, onTapped, flash, setGlow } from './dom.js';
+import { el, onTapped, flash, setGlow, wheelScrollsSideways } from './dom.js';
 import { icon } from './icons.js';
 import { INVENTORY, PIECES } from '../data/pieces.js';
 import { SIZES } from '../config.js';
@@ -36,6 +36,7 @@ export class Inventory {
     scroll.appendChild(track);
     this.root.appendChild(scroll);
     this.scroll = scroll;
+    wheelScrollsSideways(scroll);
 
     this.pieceEls = {};
     for (const id of INVENTORY) {

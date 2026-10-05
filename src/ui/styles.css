@@ -1319,7 +1319,7 @@ body {
   }
 }
 
-@media (orientation: portrait) and (max-width: 900px) {
+@media (orientation: portrait) and (max-width: 900px) and (pointer: coarse) {
   .rotate-hint {
     display: grid;
   }

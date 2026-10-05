@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { PLACES, WORLDS } from '../data/places.js';
-import { el, button, onTapped, flash } from '../ui/dom.js';
+import { el, button, onTapped, flash, wheelScrollsSideways } from '../ui/dom.js';
 import { icon } from '../ui/icons.js';
 import { Coins, LabelLayer } from '../ui/hud.js';
 import { PLACE_ART, skylineArt } from '../ui/cards.js';
@@ -79,6 +79,8 @@ export class PickerScreen {
     const picker = el('div', 'picker');
     const mine = el('div', 'card-row tap');
     const places = el('div', 'card-row tap');
+    wheelScrollsSideways(mine);
+    wheelScrollsSideways(places);
     picker.append(mine, places);
     ui.appendChild(picker);
 

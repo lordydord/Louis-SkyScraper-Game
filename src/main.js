@@ -20,7 +20,9 @@ try {
   showError(e.stack || e.message);
 }
 
-// Offline support once the game has loaded (not when testing locally with ?nosw).
-if ('serviceWorker' in navigator && !location.search.includes('nosw') && location.hostname !== 'localhost') {
+// Offline support once the game has loaded (not when testing locally with ?nosw,
+// and not in the single-page test build, which sets SKY_CITY_NO_SW).
+const noSW = window.SKY_CITY_NO_SW || location.search.includes('nosw') || location.hostname === 'localhost';
+if ('serviceWorker' in navigator && !noSW) {
   window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
 }

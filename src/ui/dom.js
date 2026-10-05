@@ -37,6 +37,19 @@ export function onTapped(elem, fn) {
   });
 }
 
+// Let a mouse wheel scroll a sideways list (touch and trackpads already can).
+export function wheelScrollsSideways(elem) {
+  elem.addEventListener(
+    'wheel',
+    (e) => {
+      if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
+      elem.scrollLeft += e.deltaY * (e.deltaMode === 1 ? 16 : 1);
+      e.preventDefault();
+    },
+    { passive: false },
+  );
+}
+
 export function setIcon(elem, name) {
   elem.innerHTML = icon(name);
 }

@@ -1,4 +1,4 @@
-import { el, onTapped, button, flash, setGlow } from './dom.js';
+import { el, onTapped, button, flash, setGlow, wheelScrollsSideways } from './dom.js';
 import { icon } from './icons.js';
 import {
   WALL_COLOURS,
@@ -84,6 +84,7 @@ export class DecorateBar {
     this.onTab = onTab;
     this.root = el('div', 'deco');
     this.options = el('div', 'options tap');
+    wheelScrollsSideways(this.options);
     const tabs = el('div', 'tabs');
     this.tabEls = {};
     for (const t of TABS) {
