@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en-GB">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover"
+    />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Louie's Sky City" />
+    <meta name="theme-color" content="#0b1a33" />
+    <meta name="description" content="Build skyscrapers all the way to space." />
+    <title>Louie's Sky City</title>
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="assets/icons/icon-180.png" />
+    <link rel="icon" type="image/png" href="assets/icons/icon-192.png" />
+    <link rel="stylesheet" href="src/ui/styles.css" />
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "./vendor/three.module.min.js",
+          "three/addons": "./vendor/three-addons.min.js"
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <canvas id="scene"></canvas>
+    <div id="ui"></div>
+
+    <div id="splash">
+      <svg class="spinner" viewBox="0 0 120 160" aria-hidden="true">
+        <rect class="bar" x="10" y="60" width="26" height="100" rx="4" style="animation-delay: 0s" />
+        <rect class="bar" x="47" y="10" width="26" height="150" rx="4" style="animation-delay: 0.2s" />
+        <rect class="bar" x="84" y="40" width="26" height="120" rx="4" style="animation-delay: 0.4s" />
+      </svg>
+    </div>
+
+    <div class="rotate-hint" aria-hidden="true">
+      <svg viewBox="0 0 120 120" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="35" y="15" width="50" height="86" rx="8" fill="rgba(255,255,255,0.1)" />
+        <circle cx="60" cy="90" r="3" fill="#fff" />
+        <path d="M100 40a40 40 0 0 1 0 40" stroke="#ffc93c" />
+        <path d="m94 76 6 6 6-8" stroke="#ffc93c" />
+      </svg>
+    </div>
+
+    <div id="error"></div>
+    <script type="module" src="src/main.js"></script>
+  </body>
+</html>

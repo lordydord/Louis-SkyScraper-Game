@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en-GB">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sandbox</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        overflow: hidden;
+        background: #000;
+      }
+      canvas {
+        display: block;
+      }
+      #info {
+        position: fixed;
+        left: 8px;
+        top: 8px;
+        color: #fff;
+        font: 12px monospace;
+      }
+    </style>
+    <script type="importmap">
+      { "imports": { "three": "../vendor/three.module.min.js", "three/addons": "../vendor/three-addons.min.js" } }
+    </script>
+  </head>
+  <body>
+    <canvas id="c"></canvas>
+    <div id="info"></div>
+    <script type="module">
+      import * as THREE from 'three';
+      import { Engine } from '../src/three/engine.js';
+      import { Environment } from '../src/three/environment.js';
+      import { CameraRig } from '../src/three/cameraRig.js';
+      import { TowerView } from '../src/three/towerView.js';
+      import { newTower, addPart, stretchPart, setPartWidth, towerHeight } from '../src/game/towerModel.js';
+      import { WORLDS } from '../src/data/places.js';
+      import { landmarkGeometry, createGhostMaterial } from '../src/three/landmarks3d.js';
+      import { createBuildingMaterial, makeTowerUniforms } from '../src/three/materials.js';
+      import { CityView } from '../src/three/cityView.js';
+      import { freePlot } from '../src/game/towerModel.js';
+      import { reservedBlocks } from '../src/game/cityLayout.js';
+
+      const q = new URLSearchParams(location.search);
+      const engine = new Engine(document.getElementById('c'));
+      const env = new Environment(engine);
+      const world = q.get('world') || 'earth';
+      env.setPlace(q.get('place') || 'newcity', world);
+      if (q.has('phase')) env.setPhase(parseFloat(q.get('phase')));
+
+      const ground = new THREE.Mesh(
+        new THREE.CircleGeometry(20000, 64).rotateX(-Math.PI / 2),
+        new THREE.MeshStandardMaterial({ color: world === 'earth' ? 0x6f9a55 : world === 'mars' ? 0xa65a32 : 0x777777, roughness: 1 }),
+      );
+      ground.receiveShadow = true;
+      engine.scene.add(ground);
+
+      const recipes = {
+        burj: (t) => {
+          t = addPart(t, 'glass').tower;
+          t = setPartWidth(t, 0, 76);
+          for (let i = 0; i < 9; i++) t = addPart(t, 'burj').tower;
+          t = addPart(t, 'spire').tower;
+          return stretchPart(t, t.parts.length - 1, 150);
+        },
+        mix: (t) => {
+          for (const p of ['stone', 'glass', 'round', 'twist', 'taper', 'damper', 'crown']) t = addPart(t, p).tower;
+          return t;
+        },
+        twin: (t) => {
+          t = { ...t, twin: true };
+          for (const p of ['stone', 'glass', 'bridge', 'round', 'round', 'dome']) t = addPart(t, p).tower;
+          return t;
+        },
+        deco: (t) => {
+          for (const p of ['glass', 'glass', 'taper', 'antenna']) t = addPart(t, p).tower;
+          t.deco = { wall: 0, glass: 0, light: { c: 9, p: q.get('pattern') || 'wave' }, extras: { beacons: true, pool: true, garden: true, flag: true, helipad: true, spotlights: true } };
+          t.done = true;
+          return t;
+        },
+      };
+      if (q.has('city')) {
+        const place = q.get('city');
+        engine.scene.remove(ground);
+        const city = new CityView(engine, env);
+        const n = parseInt(q.get('n') || '3');
+        const towers = [];
+        const reserved = reservedBlocks(place);
+        const recipesList = ['burj', 'mix', 'twin', 'deco'];
+        for (let i = 0; i < n; i++) {
+          let t = newTower({ id: 'tw' + i, city: 'c', plot: freePlot(i, reserved) });
+          t = recipes[recipesList[i % 4]](t);
+          t.done = i < n - 1 || q.has('alldone');
+          towers.push(t);
+        }
+        city.load({ id: 'c', place, seed: 1234 }, towers);
+        if (q.has('phase')) env.setPhase(parseFloat(q.get('phase')));
+        const rig = new CameraRig(engine.camera, engine.canvas);
+        rig.setGoal({ target: new THREE.Vector3(parseFloat(q.get('tx') || '0'), parseFloat(q.get('ty') || '150'), parseFloat(q.get('tz') || '0')), dist: parseFloat(q.get('dist') || '1600'), el: parseFloat(q.get('el') || '0.35'), az: parseFloat(q.get('az') || '0.7') });
+        rig.snap();
+        env.shadowRadius = 1200;
+        engine.onFrame((dt) => {
+          rig.update(dt);
+          env.update(q.has('phase') ? 0 : dt, engine.camera);
+          city.update(dt);
+        });
+        engine.start();
+        window.__city = city;
+        throw new Error('city mode');
+      }
+      if (q.has('landmarks')) {
+        const keys = q.get('landmarks').split(',');
+        const tu = makeTowerUniforms(3);
+        const { material, depthMaterial } = createBuildingMaterial(env.uniforms, tu);
+        const ghost = createGhostMaterial();
+        let x = 0;
+        for (const k of keys) {
+          const lm = landmarkGeometry(k);
+          const mesh = new THREE.Mesh(lm.geometry, q.has('ghost') ? ghost : material);
+          mesh.castShadow = true;
+          mesh.receiveShadow = true;
+          mesh.customDepthMaterial = depthMaterial;
+          x += lm.w / 2 + 30;
+          mesh.position.x = x;
+          x += lm.w / 2 + 30;
+          engine.scene.add(mesh);
+        }
+        const rig = new CameraRig(engine.camera, engine.canvas);
+        rig.setGoal({ target: new THREE.Vector3(x / 2, parseFloat(q.get('ty') || '250'), 0), dist: parseFloat(q.get('dist') || '1300'), el: 0.12, az: 0 });
+        rig.snap();
+        env.shadowRadius = 1500;
+        engine.onFrame((dt) => {
+          rig.update(dt);
+          env.focus.set(x / 2, 0, 0);
+          env.update(q.has('phase') ? 0 : dt, engine.camera);
+        });
+        engine.start();
+        throw new Error('landmarks mode');
+      }
+      let tower = newTower({ id: 't1', city: 'c', plot: [0, 0] });
+      tower = recipes[q.get('tower') || 'mix'](tower);
+      const view = new TowerView(env.uniforms, 't1');
+      view.setTower(tower, WORLDS[world]);
+      view.setCrane(q.has('crane'));
+      engine.scene.add(view.group);
+
+      const rig = new CameraRig(engine.camera, engine.canvas);
+      const H = towerHeight(tower);
+      rig.setGoal({ target: new THREE.Vector3(0, H * 0.5, 0), dist: H * 1.6 + 80, el: parseFloat(q.get('el') || '0.25'), az: parseFloat(q.get('az') || '0.7') });
+      if (q.has('dist')) rig.setGoal({ dist: parseFloat(q.get('dist')) });
+      if (q.has('ty')) rig.setGoal({ target: new THREE.Vector3(0, parseFloat(q.get('ty')), 0) });
+      rig.snap();
+      env.shadowRadius = Math.max(200, H * 0.8);
+
+      engine.onFrame((dt) => {
+        rig.update(dt);
+        env.focus.set(0, 0, 0);
+        env.update(q.has('phase') ? 0 : dt, engine.camera);
+        view.update(dt);
+        document.getElementById('info').textContent = `H ${H.toFixed(0)} m  wobble ${view.wobble.value.toFixed(2)}  q ${engine.quality.name}`;
+      });
+      engine.start();
+      window.__ready = true;
+    </script>
+  </body>
+</html>
