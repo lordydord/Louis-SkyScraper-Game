@@ -47,11 +47,16 @@ the game.
   At high altitude the curve of the planet becomes visible.
 - Big metres number top-left (e.g. `1,250 m`).
 - See-through **famous buildings** to compare against, with a celebration and a spoken
-  "Taller than the Eiffel Tower!" each time he passes one. Includes the Jeddah Tower
+  "Taller than the Eiffel Tower!" each time he passes one. The next one to beat stands
+  beside the tower whenever its top fits on the screen (zoom out to see a far-off one);
+  it is always shown as a picture and number in the height panel. Includes the Jeddah Tower
   (under construction, ~430 m built as of mid-2026, aiming for 1,000 m+ by 2028).
 - **Tape measure**: unrolls up the side when a tower is finished; a ruler button shows or
   hides it at any time (it is *not* always on).
-- **Ride the lift** to the top while the metres count up.
+- **Ride the lift** (purple button): a glass lift with a little passenger climbs the
+  outside of the tower while the camera circles it (a full turn; half a turn round the
+  outside for twin towers), the metres count up, and at the top the camera pulls back
+  to show the whole tower and its height. Tap to stop early.
 
 ## Money
 
@@ -68,7 +73,8 @@ the game.
   Earth at true scale, with its width in km.
 - Avoid **sudden loud noises**: soft sounds only, fireworks have no bangs, a limiter on output.
 - Sounds: building sound effects, calm background music, a voice calling out heights,
-  city sounds (birds by day, crickets at night, gentle traffic). Mute button always available.
+  city sounds (occasional birds by day, soft crickets at night). There is deliberately no
+  constant hum or wind: in testing it came across as white noise. Mute button always available.
 
 ## After building: decorate
 

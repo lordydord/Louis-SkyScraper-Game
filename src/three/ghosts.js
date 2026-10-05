@@ -3,6 +3,8 @@ import { landmarksFor } from '../data/landmarks.js';
 import { landmarkGeometry, createGhostMaterial, hasModel } from './landmarks3d.js';
 import { clamp, damp } from '../util/math.js';
 
+const _v = new THREE.Vector3();
+
 // See-through famous buildings standing beside Louie's tower: the next one to beat,
 // and the one he just passed (in green). Sky heights (clouds, aeroplanes, the edge
 // of space) are shown as glowing rings around the tower.
@@ -94,28 +96,44 @@ export class Ghosts {
       const s = this.slots[slot];
       if (!s) continue;
       s.age += dt;
-      const fadeOut = slot === 'beaten' ? clamp((4.5 - s.age) / 1.2, 0, 1) * 0.7 : 1;
-      s.fade = damp(s.fade, fadeOut, 4, dt);
-      s.mat.uniforms.uOpacity.value = s.fade;
       if (slot === 'beaten' && s.age > 6) {
         this._drop('beaten');
         continue;
       }
       const lm = s.lm;
+      let top;
       if (lm.kind === 'sky' || lm.kind === 'mountain') {
         const r = Math.max(this.footprint * 1.6, lm.h * 0.08);
         s.obj.scale.set(r, r, r);
         s.obj.position.set(this.towerPos.x, this.towerPos.y + lm.h, this.towerPos.z);
         s.labelPos = s.obj.position.clone().addScaledVector(right, r * side);
-        continue;
+        top = s.obj.position;
+      } else {
+        const gap = Math.max(20, this.footprint * 0.4);
+        const off = this.footprint / 2 + s.w / 2 + gap;
+        s.obj.position.copy(this.towerPos).addScaledVector(right, off * side);
+        s.obj.rotation.y = Math.atan2(toCam.x, toCam.z);
+        s.labelPos = s.obj.position.clone().setY(this.towerPos.y + lm.h);
+        top = s.labelPos;
       }
-      const w = s.w;
-      const gap = Math.max(20, this.footprint * 0.4);
-      const off = this.footprint / 2 + w / 2 + gap;
-      s.obj.position.copy(this.towerPos).addScaledVector(right, off * side);
-      s.obj.rotation.y = Math.atan2(toCam.x, toCam.z);
-      s.labelPos = s.obj.position.clone().setY(this.towerPos.y + lm.h);
+      let want = slot === 'beaten' ? clamp((4.5 - s.age) / 1.2, 0, 1) * 0.7 : 1;
+      // The next building only shows while its top is on screen: a giant see-through
+      // shape running off the edge of the picture can't be compared with anything.
+      if (slot === 'target') want *= this._onScreen(top, camera);
+      s.fade = damp(s.fade, want, 4, dt);
+      s.mat.uniforms.uOpacity.value = s.fade;
     }
+  }
+
+  // 1 when the point is comfortably on screen, fading to 0 at the sides and just
+  // above the top.
+  _onScreen(point, camera) {
+    const p = _v.copy(point).applyMatrix4(camera.matrixWorldInverse);
+    if (p.z > -0.1) return 0;
+    const ty = Math.tan((camera.fov * Math.PI) / 360);
+    const y = p.y / -p.z / ty;
+    const x = p.x / -p.z / (ty * camera.aspect);
+    return clamp((1.05 - y) / 0.2, 0, 1) * clamp((1 - Math.abs(x)) / 0.2, 0, 1);
   }
 
   // For the floating number labels: [{ lm, pos, beaten }]

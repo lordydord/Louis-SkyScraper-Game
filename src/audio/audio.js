@@ -13,7 +13,6 @@ export class AudioEngine {
     this.night = 0;
     this.world = 'earth';
     this.altitude = 0;
-    this.cityLife = 0;
     this._tickTimes = [];
     this._musicTimer = null;
     this._nextBeat = 0;
@@ -57,7 +56,6 @@ export class AudioEngine {
     this.amb.gain.value = 0.22;
     this.amb.connect(this.master);
     this.noise = this._makeNoise();
-    this._startAmbience();
     this._startMusic();
     this.ready = true;
     // iOS: play a silent buffer to fully unlock.
@@ -215,7 +213,7 @@ export class AudioEngine {
   }
 
   whoosh(up = true) {
-    this._noise({ dur: 1.2, vol: 0.08, type: 'bandpass', freq: up ? 300 : 1800, freq2: up ? 1800 : 300, q: 2, attack: 0.3 });
+    this._noise({ dur: 1.0, vol: 0.045, type: 'bandpass', freq: up ? 300 : 1800, freq2: up ? 1800 : 300, q: 2, attack: 0.3 });
   }
 
   // Firework: a rising whistle and a soft sparkly fizz, never a bang.
@@ -285,54 +283,21 @@ export class AudioEngine {
   }
 
   // ---------- ambience ----------
-
-  _startAmbience() {
-    const ctx = this.ctx;
-    // City hum: brown-ish noise, very low.
-    const src = ctx.createBufferSource();
-    src.buffer = this.noise;
-    src.loop = true;
-    const f = ctx.createBiquadFilter();
-    f.type = 'lowpass';
-    f.frequency.value = 320;
-    this.humGain = ctx.createGain();
-    this.humGain.gain.value = 0;
-    src.connect(f).connect(this.humGain).connect(this.amb);
-    src.start();
-    // Wind (high up, or on Mars).
-    const w = ctx.createBufferSource();
-    w.buffer = this.noise;
-    w.loop = true;
-    this.windFilter = ctx.createBiquadFilter();
-    this.windFilter.type = 'bandpass';
-    this.windFilter.frequency.value = 500;
-    this.windFilter.Q.value = 0.7;
-    this.windGain = ctx.createGain();
-    this.windGain.gain.value = 0;
-    w.connect(this.windFilter).connect(this.windGain).connect(this.amb);
-    w.start();
-  }
+  // Only occasional birdsong by day and soft crickets at night, near the ground.
+  // (There is deliberately no constant city hum or wind: it sounded like hiss.)
 
   // Called every frame with the current scene state.
-  update(dt, { night = 0, world = 'earth', altitude = 0, cityLife = 0 } = {}) {
+  update(dt, { night = 0, world = 'earth', altitude = 0 } = {}) {
     this.night = night;
     if (!this.ready) return;
-    const t = this.ctx.currentTime;
-    const earth = world === 'earth';
-    const high = Math.min(1, altitude / 3000);
-    this.humGain.gain.setTargetAtTime(earth ? 0.35 * cityLife * (1 - high) * (1 - night * 0.5) : 0, t, 0.5);
-    const windy = world === 'mars' ? 0.25 : earth ? 0.1 + 0.35 * high * (altitude < 60000 ? 1 : 0) : 0;
-    this.windGain.gain.setTargetAtTime(windy, t, 0.8);
-    this.windFilter.frequency.setTargetAtTime(400 + Math.sin(t * 0.3) * 150, t, 0.5);
-
     this._ambTimer -= dt;
-    if (this._ambTimer <= 0 && earth && altitude < 1500) {
+    if (this._ambTimer <= 0 && world === 'earth' && altitude < 1500) {
       if (night < 0.5) {
         this._bird();
-        this._ambTimer = 2 + Math.random() * 5;
+        this._ambTimer = 3 + Math.random() * 6;
       } else {
         this._crickets();
-        this._ambTimer = 0.6 + Math.random() * 1.2;
+        this._ambTimer = 1.6 + Math.random() * 2.4;
       }
     }
   }
@@ -360,6 +325,6 @@ export class AudioEngine {
     const dest = this.amb;
     const pan = Math.random() * 1.6 - 0.8;
     const f = 4200 + Math.random() * 600;
-    for (let i = 0; i < 3; i++) this._tone({ freq: f, dur: 0.035, vol: 0.025, type: 'sine', when: i * 0.05, dest, pan, attack: 0.004 });
+    for (let i = 0; i < 3; i++) this._tone({ freq: f, dur: 0.035, vol: 0.016, type: 'sine', when: i * 0.05, dest, pan, attack: 0.004 });
   }
 }

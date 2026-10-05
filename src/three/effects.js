@@ -123,21 +123,22 @@ export class Effects {
     }
   }
 
-  // Dust puff where a new section lands.
+  // A faint ring of dust where a new section lands (kept soft: the particles add
+  // light, so lots of big overlapping ones would make a bright white blob).
   dust(center, radius) {
-    for (let i = 0; i < 40; i++) {
-      const a = Math.random() * Math.PI * 2;
-      const dir = new THREE.Vector3(Math.cos(a), 0.15 + Math.random() * 0.2, Math.sin(a));
+    for (let i = 0; i < 18; i++) {
+      const a = (i / 18) * Math.PI * 2 + Math.random() * 0.3;
+      const dir = new THREE.Vector3(Math.cos(a), 0.1 + Math.random() * 0.15, Math.sin(a));
       this._spawn({
-        p: center.clone().add(new THREE.Vector3(Math.cos(a) * radius * 0.5, 0, Math.sin(a) * radius * 0.5)),
-        v: dir.multiplyScalar(radius * (0.5 + Math.random() * 0.6)),
+        p: center.clone().add(new THREE.Vector3(Math.cos(a) * radius * 0.55, 0, Math.sin(a) * radius * 0.55)),
+        v: dir.multiplyScalar(radius * (0.5 + Math.random() * 0.4)),
         life: 0,
-        max: 0.8 + Math.random() * 0.4,
-        size: radius * 0.35,
+        max: 0.6 + Math.random() * 0.3,
+        size: radius * 0.18,
         c: new THREE.Color(0.55, 0.52, 0.48),
         g: 0,
         drag: 2.5,
-        dim: 0.35,
+        dim: 0.12,
       });
     }
   }

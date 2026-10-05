@@ -25,8 +25,9 @@ import { Inventory } from '../ui/inventory.js';
 import { DecorateBar } from '../ui/decorate.js';
 import { Hand } from '../ui/tutorial.js';
 import { formatNumber, spokenMetres } from '../util/format.js';
-import { clamp, lerp, easeInOutCubic, damp } from '../util/math.js';
+import { clamp, lerp, damp, smoothstep } from '../util/math.js';
 import { idbSet } from '../util/idb.js';
+import { createLiftCar, towerRadiusAt } from '../three/liftCar.js';
 
 // One city: looking around, building a tower, decorating it, riding the lift.
 
@@ -83,6 +84,15 @@ export class CityScreen {
 
   exit() {
     this.dead = true;
+    if (this.liftCar) {
+      this.app.engine.scene.remove(this.liftCar);
+      this.liftCar.traverse((o) => {
+        o.geometry?.dispose();
+        o.material?.dispose();
+      });
+      this.liftCar = null;
+    }
+    this.app.rig.enabled = true;
     this.app.tape.hide();
     this.app.ghosts.clear();
     this.app.ghosts.enabled = false;
@@ -654,6 +664,7 @@ export class CityScreen {
     app.tape.hide();
     this.mode = 'celebrate';
     this._showFor('view');
+    this.hand.hide();
     this.buildBtn.classList.add('hidden');
     const top = this.tv.group.position.clone().setY(H);
     app.audio.cheer();
@@ -742,6 +753,13 @@ export class CityScreen {
   }
 
   // ---------- the lift ride ----------
+  // A glass lift climbs the outside of the tower while the camera circles round
+  // with it (a full turn; half a turn for twin towers), counting the metres. At the
+  // top the camera pulls back to show the whole tower.
+
+  get cameraLocked() {
+    return this.mode === 'lift' && this.ride && this.ride.phase === 'up';
+  }
 
   startLift() {
     const app = this.app;
@@ -754,69 +772,145 @@ export class CityScreen {
     this.liftReturn = this.mode;
     this.mode = 'lift';
     this._showFor('lift');
+    this.hand.hide();
+    this._ghostsWere = app.ghosts.enabled;
+    app.ghosts.enabled = false;
     app.rig.enabled = false;
+    if (!this.liftCar) {
+      this.liftCar = createLiftCar();
+      app.engine.scene.add(this.liftCar);
+    }
+    const lay = layout(tv.tower);
+    const roof = [...lay].reverse().find((it) => !it.top);
+    const cx = tv.roofXs ? tv.roofXs[tv.roofXs.length - 1] : 0;
     const H = tv.height;
-    const fp = towerFootprint(tv.tower);
+    const baseR = towerRadiusAt(lay, Math.min(10, H * 0.5));
+    // Twin towers: go half way round the outside of the right-hand tower, so the
+    // other tower never gets in the way. One tower: all the way round.
+    let az0 = app.rig.cur.az;
+    let turn = Math.PI * 2;
+    if (tv.tower.twin) {
+      const front = Math.cos(az0) >= 0;
+      az0 = front ? 0 : Math.PI;
+      turn = front ? Math.PI : -Math.PI;
+    }
     this.ride = {
       tv,
+      lay,
+      H,
+      roofY: roof ? roof.z1 : H,
+      center: tv.group.position.clone().add(new THREE.Vector3(cx, 0, 0)),
       t: 0,
       hold: 0,
-      H,
-      dur: clamp(5 + 2.6 * Math.log10(H / 50), 5, 15),
-      r: fp / 2 + 9,
-      az: app.rig.cur.az,
+      phase: 'up',
+      dur: clamp(8 + 3 * Math.log10(Math.max(H, 50) / 50), 8, 18),
+      az0,
+      turn,
+      scale: clamp(baseR / 12, 1, 3),
     };
+    this.liftCar.visible = true;
+    if (tv.crane) tv.crane.visible = false;
     app.audio.whoosh(true);
   }
 
   _updateLift(dt) {
     const app = this.app;
     const r = this.ride;
-    const cam = app.engine.camera;
-    if (r.t < 1) r.t = Math.min(1, r.t + dt / r.dur);
-    else r.hold += dt;
-    const e = easeInOutCubic(r.t);
-    const y = Math.exp(lerp(Math.log(3), Math.log(Math.max(4, r.H * 0.97)), e));
-    const az = r.az + e * 1.4;
-    const base = r.tv.group.position;
-    const dir = new THREE.Vector3(Math.sin(az), 0, Math.cos(az));
-    cam.position.copy(base).addScaledVector(dir, r.r).setY(y);
-    // Look out over the city, tilting down more the higher we go.
-    const look = cam.position.clone().addScaledVector(dir, 600).setY(y - 60 - y * 0.25);
-    cam.lookAt(look);
-    cam.near = 0.5;
-    cam.far = Math.max(90000, y * 30);
-    cam.updateProjectionMatrix();
-    this.centerNum.innerHTML = `${formatNumber(y)}<span class="unit"> m</span>`;
-    if (r.t >= 1 && !r.said) {
-      r.said = true;
-      app.audio.milestone();
-      app.voice.say(spokenMetres(Math.round(r.H)), { important: true });
+    if (!r) return;
+    if (r.phase === 'reveal') {
+      r.hold += dt;
+      if (r.hold > 3.4) this._finishLift();
+      return;
     }
-    if (r.hold > 3) this.endLift();
+    const cam = app.engine.camera;
+    r.t = Math.min(1, r.t + dt / r.dur);
+    const e = smoothstep(0, 1, r.t);
+    // Equal time for each ×10 in height (so a 100 km tower doesn't rush past the
+    // ground), but steady near the bottom instead of crawling for metres.
+    const c = 15;
+    const h = Math.exp(lerp(Math.log(3 + c), Math.log(Math.max(4, r.H) + c), e)) - c;
+    const az = r.az0 + e * r.turn;
+    const dir = new THREE.Vector3(Math.sin(az), 0, Math.cos(az));
+    // Follow the tower as it sways, so the lift stays on its wall.
+    const sway = r.tv.uniforms.uSway.value;
+    const bend = (y) => {
+      const k = clamp(y / Math.max(1, r.H), 0, 1.3);
+      return k * k;
+    };
+    const carY = clamp(h - 3, 0, r.roofY);
+    const carR = towerRadiusAt(r.lay, Math.max(0, Math.min(carY, r.roofY - 0.5))) + 1.8 * r.scale;
+    const car = this.liftCar;
+    car.scale.setScalar(r.scale);
+    car.position.set(r.center.x + dir.x * carR + sway.x * bend(carY), carY, r.center.z + dir.z * carR + sway.y * bend(carY));
+    car.rotation.y = az;
+    const R = towerRadiusAt(r.lay, Math.min(h, r.H - 0.5));
+    const D = R + Math.max(30, R + 20) * Math.max(1, r.scale * 0.6);
+    const bh = bend(h);
+    cam.position.set(r.center.x + dir.x * D + sway.x * bh, h + D * 0.14 + 1.5, r.center.z + dir.z * D + sway.y * bh);
+    cam.lookAt(r.center.x + dir.x * R * 0.6 + sway.x * bh, h + 1, r.center.z + dir.z * R * 0.6 + sway.y * bh);
+    cam.near = 0.5;
+    cam.far = Math.max(90000, h * 30);
+    cam.updateProjectionMatrix();
+    this.centerNum.innerHTML = `${formatNumber(h)}<span class="unit"> m</span>`;
+    if (r.t >= 1) this._liftReveal();
   }
 
-  endLift() {
+  // Top reached: pull back to see the whole tower and say how tall it is.
+  _liftReveal() {
     const app = this.app;
-    if (this.mode !== 'lift') return;
-    this.mode = this.liftReturn || 'view';
-    this.ride = null;
-    // Hand the camera back smoothly from where the lift stopped.
-    const cam = app.engine.camera;
-    const rig = app.rig;
-    rig.enabled = true;
-    const tgt = new THREE.Vector3();
-    cam.getWorldDirection(tgt);
-    rig.cur.target.copy(cam.position).addScaledVector(tgt, 200);
+    const r = this.ride;
+    r.phase = 'reveal';
+    r.hold = 0;
+    this.liftCar.visible = false;
+    this._cameraToRig();
+    const fp = Math.max(towerFootprint(r.tv.tower), 40);
+    const vis = 2 * Math.tan((app.engine.camera.fov * Math.PI) / 360);
+    const dist = Math.max(r.H / (0.56 * vis) + fp, fp * 2.6 + 110);
+    // (Looking round the city allows zooming out further than while building.)
+    this._setLimits(this.liftReturn === 'view' ? Math.max(dist, 2000) : dist);
+    // Aim a little above the middle, so the top stays clear of the big number.
+    app.rig.flyTo({ target: r.tv.group.position.clone().setY(r.H * 0.56), dist, el: 0.2, duration: 2.6 });
+    this.centerNum.innerHTML = `${formatNumber(r.H)}<span class="unit"> m</span>`;
+    app.audio.milestone();
+    app.voice.say(spokenMetres(Math.round(r.H)), { important: true });
+  }
+
+  // Put the orbit camera exactly where the lift camera is, so control is smooth.
+  _cameraToRig() {
+    const cam = this.app.engine.camera;
+    const rig = this.app.rig;
+    const dir = new THREE.Vector3();
+    cam.getWorldDirection(dir);
+    rig.cur.target.copy(cam.position).addScaledVector(dir, 200);
     const off = cam.position.clone().sub(rig.cur.target);
     rig.cur.dist = off.length();
     rig.cur.az = Math.atan2(off.x, off.z);
     rig.cur.el = Math.asin(clamp(off.y / rig.cur.dist, -1, 1));
+    rig.setGoal({ target: rig.cur.target, dist: rig.cur.dist, az: rig.cur.az, el: rig.cur.el });
+  }
+
+  _finishLift() {
+    this.mode = this.liftReturn || 'view';
+    if (this.ride && this.ride.tv.crane) this.ride.tv._placeCrane();
+    this.ride = null;
+    this.app.rig.enabled = true;
+    this.app.ghosts.enabled = !!this._ghostsWere;
     this._showFor(this.mode);
-    if (this.mode === 'build') {
-      this._refreshBuildHud();
-      this._frameTower(true);
-    } else this._frameCity(true);
+    if (this.mode === 'build') this._refreshBuildHud();
+    this._tutorial();
+  }
+
+  // A tap during the ride stops it.
+  endLift() {
+    if (this.mode !== 'lift') return;
+    const early = this.ride && this.ride.phase === 'up';
+    if (this.liftCar) this.liftCar.visible = false;
+    if (early) this._cameraToRig();
+    this._finishLift();
+    if (early) {
+      if (this.mode === 'build') this._frameTower(true);
+      else this._frameCity(true);
+    }
   }
 
   // ---------- coin bubbles ----------
@@ -904,9 +998,8 @@ export class CityScreen {
       if (this.deco.tab !== 'lights') hand.point(this.deco.tabEls.lights, 'tap');
       else hand.point(() => {
         const s = this.deco.options.querySelectorAll('.tile')[1];
-        if (!s) return null;
-        const r = s.getBoundingClientRect();
-        return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+        const r = s && s.getBoundingClientRect();
+        return r && r.width ? { x: r.left + r.width / 2, y: r.top + r.height / 2 } : null;
       }, 'tap');
       return;
     }

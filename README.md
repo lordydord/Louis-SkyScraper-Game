@@ -45,7 +45,9 @@ Tips:
   decorate it (paint, glass, light shows, rooftop extras, fireworks). The ✔ again
   completes it: people move in, coins pour out (taller = more), and the city grows.
 - **Coins** also come from coin bubbles that float above finished towers.
-- **Left buttons:** sun/moon (day ↔ night), ruler (tape measure), lift (ride to the top).
+- **Left buttons:** sun/moon (day ↔ night), ruler (tape measure), and the purple lift: a
+  glass lift rides up the outside of the tower while the camera circles it, then shows
+  the whole tower and its height (tap to stop early).
 - **Night sky:** tap the Moon or a bright planet to compare its size with Earth.
 
 ## For developers

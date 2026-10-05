@@ -966,9 +966,9 @@ body {
 .center-num {
   position: absolute;
   left: 50%;
-  top: 42%;
+  top: 15%;
   transform: translate(-50%, -50%);
-  font-size: 120px;
+  font-size: 96px;
   font-weight: 900;
   font-variant-numeric: tabular-nums;
   color: #fff;
@@ -993,29 +993,29 @@ body {
 .burst {
   position: absolute;
   left: 50%;
-  top: 24%;
+  top: 11%;
   transform: translate(-50%, -50%);
   display: flex;
   align-items: center;
-  gap: 18px;
-  padding: 14px 30px 14px 18px;
+  gap: 14px;
+  padding: 8px 24px 8px 14px;
   border-radius: 999px;
   background: var(--panel-strong);
-  font-size: 46px;
+  font-size: 38px;
   font-weight: 900;
-  box-shadow: 0 0 0 4px var(--yellow), 0 16px 40px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 0 0 4px var(--yellow), 0 12px 30px rgba(0, 0, 0, 0.4);
   animation: burstIn 0.5s cubic-bezier(0.2, 1.6, 0.4, 1);
 }
 
 .burst img {
-  width: 70px;
-  height: 90px;
+  width: 52px;
+  height: 66px;
   object-fit: contain;
 }
 
 .burst svg {
-  width: 64px;
-  height: 64px;
+  width: 50px;
+  height: 50px;
 }
 
 @keyframes burstIn {

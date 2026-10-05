@@ -13,7 +13,7 @@ export const ICONS = {
     '<rect x="8" y="2.5" width="8" height="19" rx="1.5" fill="currentColor" fill-opacity=".25"/><path d="M8 6h3.5M8 9.5h2M8 13h3.5M8 16.5h2M8 20h3.5"/>',
   ),
   lift: S(
-    '<rect x="5" y="2.5" width="14" height="19" rx="2"/><path d="M12 2.5v19" stroke-width="1.6"/><path d="m7.6 9 1.4-2 1.4 2M7.6 15l1.4 2 1.4-2" stroke-width="1.8"/><circle cx="15.5" cy="11" r="1.3" fill="currentColor"/><path d="M15.5 12.5v3" stroke-width="1.8"/>',
+    '<path d="M9.5 2v4.5" stroke-width="1.6"/><rect x="3.5" y="6.5" width="12" height="15" rx="2" fill="currentColor" fill-opacity=".25"/><circle cx="9.5" cy="11.3" r="1.7" fill="currentColor"/><path d="M9.5 13.5v4.8M7.4 15.6h4.2" stroke-width="1.8"/><path d="M19.5 18V5.5M16.8 8.2l2.7-2.7 2.7 2.7" stroke-width="2.2"/>',
   ),
   undo: S('<path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/>'),
   tick: S('<path d="m4.5 12.5 5 5 10-11" stroke-width="3"/>'),

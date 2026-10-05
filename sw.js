@@ -3,7 +3,7 @@
 // A new version downloads in the background and is used the next time the game
 // is opened (it never swaps files in the middle of a game).
 
-const VERSION = 'sky-city-212921bdc1';
+const VERSION = 'sky-city-241cbdd036';
 // FILES-START
 const FILES = [
   './',
@@ -34,6 +34,7 @@ const FILES = [
   './src/three/geometry.js',
   './src/three/ghosts.js',
   './src/three/landmarks3d.js',
+  './src/three/liftCar.js',
   './src/three/materials.js',
   './src/three/planetTextures.js',
   './src/three/tape.js',

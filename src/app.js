@@ -163,7 +163,7 @@ export class App {
 
   frame(dt) {
     const s = this.screen;
-    if (!(s && s.mode === 'lift')) this.rig.update(dt);
+    if (!s?.cameraLocked) this.rig.update(dt);
     s?.update?.(dt);
     const cam = this.engine.camera;
     this.env.focus.set(this.rig.cur.target.x, 0, this.rig.cur.target.z);
@@ -172,12 +172,7 @@ export class App {
     this.effects.update(dt, cam, this.engine.height);
     this.tape.update(dt, cam);
     this.ghosts.update(dt, cam);
-    this.audio.update(dt, {
-      night: this.env.night,
-      world: this.env.world,
-      altitude: cam.position.y,
-      cityLife: Math.min(1, this.city.towerViews.size / 3 + (this.city.layout?.fill ? 0.6 : 0)),
-    });
+    this.audio.update(dt, { night: this.env.night, world: this.env.world, altitude: cam.position.y });
   }
 }
 
