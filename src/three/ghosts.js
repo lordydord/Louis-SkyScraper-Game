@@ -42,7 +42,7 @@ export class Ghosts {
     const mat = createGhostMaterial(beaten ? 0x8dffb8 : 0x9fe6ff);
     let obj;
     let w = 0;
-    if (lm.kind === 'sky') {
+    if (lm.kind === 'sky' || lm.kind === 'mountain') {
       obj = new THREE.Mesh(this.ringGeo, mat);
     } else if (hasModel(lm.key)) {
       const g = landmarkGeometry(lm.key);
@@ -102,21 +102,14 @@ export class Ghosts {
         continue;
       }
       const lm = s.lm;
-      if (lm.kind === 'sky') {
+      if (lm.kind === 'sky' || lm.kind === 'mountain') {
         const r = Math.max(this.footprint * 1.6, lm.h * 0.08);
         s.obj.scale.set(r, r, r);
         s.obj.position.set(this.towerPos.x, this.towerPos.y + lm.h, this.towerPos.z);
         s.labelPos = s.obj.position.clone().addScaledVector(right, r * side);
         continue;
       }
-      let w = s.w;
-      let sx = 1;
-      if (lm.kind === 'mountain') {
-        // Squash wide mountains sideways so the peak stays near the tower.
-        sx = clamp((this.height * 1.4 + this.footprint) / w, 0.02, 1);
-        w *= sx;
-      }
-      s.obj.scale.set(sx, 1, sx);
+      const w = s.w;
       const gap = Math.max(20, this.footprint * 0.4);
       const off = this.footprint / 2 + w / 2 + gap;
       s.obj.position.copy(this.towerPos).addScaledVector(right, off * side);

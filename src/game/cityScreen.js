@@ -19,7 +19,7 @@ import { wobbleLevel } from './physics.js';
 import { finishCoins, bubbleCoins, BUBBLE_MIN_S, BUBBLE_MAX_S } from './economy.js';
 import { towerFootprint } from '../three/towerView.js';
 import { el, button, setIcon, setGlow, flash } from '../ui/dom.js';
-import { icon } from '../ui/icons.js';
+import { icon, SKY_ICONS } from '../ui/icons.js';
 import { HeightPanel, Coins, LabelLayer, flyCoins, burst } from '../ui/hud.js';
 import { Inventory } from '../ui/inventory.js';
 import { DecorateBar } from '../ui/decorate.js';
@@ -29,6 +29,12 @@ import { clamp, lerp, easeInOutCubic, damp } from '../util/math.js';
 import { idbSet } from '../util/idb.js';
 
 // One city: looking around, building a tower, decorating it, riding the lift.
+
+// A picture for a famous building/height: its 3D render, or an icon for sky heights.
+function landmarkPicture(thumbs, lm) {
+  if (SKY_ICONS[lm.key]) return icon(SKY_ICONS[lm.key]);
+  return thumbs.landmark(lm.key);
+}
 
 const STRETCH_PX = 230; // drag this far to grow a section by e (about 2.7x)
 
@@ -146,14 +152,9 @@ export class CityScreen {
       getDeco: () => this.tower?.deco || {},
       onChange: (change) => this.decorate(change),
       onFirework: () => this.launchFireworks(),
-      onTab: (tab) => {
+      onTab: () => {
         app.audio.click();
-        if (tab === 'lights' && !app.env.isNight && !this._autoNight) {
-          // Lights look best in the dark: glide into the evening once.
-          this._autoNight = true;
-          app.env.toggleDayNight();
-          app.audio.whoosh(false);
-        }
+        this._tutorial();
       },
     });
 
@@ -307,7 +308,7 @@ export class CityScreen {
     // The next famous building to beat.
     this.app.ghosts.sync(this.tv.group.position, H, towerFootprint(t));
     const goal = this.app.ghosts.target;
-    this.height.setGoal(goal, goal ? this.app.thumbs.landmark(goal.key) : null);
+    this.height.setGoal(goal, goal ? landmarkPicture(this.app.thumbs, goal) : null);
     // Physics hint: a very wobbly tower makes the wide size (and the damper) glow.
     const red = wobbleLevel(this.tv.wobble.value) === 2;
     this.inventory.glowSize(red ? 3 : -1);
@@ -452,7 +453,7 @@ export class CityScreen {
       this._frameTower(false);
       this.app.ghosts.sync(this.tv.group.position, towerHeight(this.tower), towerFootprint(this.tower));
       const goal = this.app.ghosts.target;
-      this.height.setGoal(goal, goal ? this.app.thumbs.landmark(goal.key) : null);
+      this.height.setGoal(goal, goal ? landmarkPicture(this.app.thumbs, goal) : null);
     });
     const end = () => {
       const d = this.knobDrag;
@@ -518,10 +519,10 @@ export class CityScreen {
       app.effects.sparkle(top, Math.max(25, newH * 0.08));
       app.audio.milestone();
       app.voice.say(lm.say, { important: !live });
-      const img = app.thumbs.landmark(lm.key);
+      const pic = landmarkPicture(app.thumbs, lm);
       burst(
         this.ui,
-        `${img ? `<img src="${img}" alt="">` : `<span>${icon('sparkle')}</span>`}<span>${formatNumber(lm.h)} m</span><span style="color:#5ef28f">${icon('tick')}</span>`,
+        `${pic && !pic.startsWith('<svg') ? `<img src="${pic}" alt="">` : pic || icon('sparkle')}<span>${formatNumber(lm.h)} m</span><span style="color:#5ef28f">${icon('tick')}</span>`,
       );
       this.height.pop();
       // The first time ever: a few bonus coins.
@@ -607,7 +608,15 @@ export class CityScreen {
     this.tv.setTower(this.tower, this.world);
     app.audio.click();
     app.audio.resize(true);
-    if (change.light) this.store.markTutorial('lights');
+    if (change.light && change.light.p !== 'off') {
+      this.store.markTutorial('lights');
+      // Light shows look best in the dark: the first time, glide into the night.
+      if (!app.env.isNight && !this._autoNight) {
+        this._autoNight = true;
+        app.env.toggleDayNight();
+        app.audio.whoosh(false);
+      }
+    }
     this._tutorial();
   }
 
@@ -758,7 +767,7 @@ export class CityScreen {
     const dir = new THREE.Vector3(Math.sin(az), 0, Math.cos(az));
     cam.position.copy(base).addScaledVector(dir, r.r).setY(y);
     // Look out over the city, tilting down more the higher we go.
-    const look = cam.position.clone().addScaledVector(dir, 600).setY(y - 120 - y * 0.45);
+    const look = cam.position.clone().addScaledVector(dir, 600).setY(y - 60 - y * 0.25);
     cam.lookAt(look);
     cam.near = 0.5;
     cam.far = Math.max(90000, y * 30);
@@ -969,8 +978,8 @@ export class CityScreen {
     this.labels.begin();
     if (app.ghosts.enabled && this.mode === 'build') {
       for (const l of app.ghosts.labels()) {
-        const img = app.thumbs.landmark(l.lm.key);
-        const pic = img ? `<img src="${img}" alt="">` : l.lm.kind === 'sky' ? icon('sparkle') : '';
+        const p = landmarkPicture(app.thumbs, l.lm);
+        const pic = p && !p.startsWith('<svg') ? `<img src="${p}" alt="">` : p || '';
         this.labels.put('ghost:' + l.lm.key, l.pos, cam, W, H, {
           cls: `label3d ${l.beaten ? 'beaten' : 'ghost'}`,
           html: `${pic}${formatNumber(l.lm.h)} m${l.beaten ? icon('tick') : ''}`,

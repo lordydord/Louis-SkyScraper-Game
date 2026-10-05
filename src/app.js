@@ -14,6 +14,7 @@ import { PlanetView } from './ui/planetView.js';
 import { setIcon } from './ui/dom.js';
 import { TitleScreen, PickerScreen, PortfolioScreen } from './game/screens.js';
 import { CityScreen } from './game/cityScreen.js';
+import { INVENTORY } from './data/pieces.js';
 
 // Owns everything and switches between screens: title -> places -> a city, and
 // the portfolio.
@@ -74,7 +75,11 @@ export class App {
     if (this.cityLoaded !== city.id) {
       this.city.load(city, city.id === '__backdrop' ? [] : store.cityTowers(city.id));
       this.cityLoaded = city.id;
-      this.ghosts.enabled = false;
+    }
+    this.ghosts.enabled = false;
+    this.ghosts.clear();
+    this.tape.hide();
+    {
       const H = Math.max(this.city.tallest(), 150);
       const tallest = [...this.city.towerViews.values()].sort((a, b) => b.height - a.height)[0];
       const lm = this.city.layout.landmarks[0];
@@ -84,10 +89,20 @@ export class App {
           ? this.city.plotPosition(lm.block).setY(H * 0.45)
           : new THREE.Vector3(0, H * 0.45, 0);
       this.rig.maxDist = 1e6;
-      this.rig.setGoal({ target, dist: H * 1.9 + 600, el: 0.2 });
-      this.rig.snap();
+      this.rig.flyTo({ target, dist: H * 1.9 + 600, el: 0.2, duration: 1.5 });
     }
     this.rig.autoSpin = 0.05;
+  }
+
+  // Render picture icons ahead of time, a few per frame, so menus open instantly.
+  prewarm() {
+    const ids = [...INVENTORY];
+    const step = () => {
+      if (!ids.length) return;
+      this.thumbs.piece(ids.shift());
+      requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
   }
 
   showTitle() {

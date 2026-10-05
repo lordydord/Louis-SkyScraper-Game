@@ -12,6 +12,7 @@ import {
   createBuildingMaterial,
   createGlassMaterial,
   createBeamMaterial,
+  createGuideMaterial,
 } from './materials.js';
 import { GeoBuilder, square, circle, chamferSquare, yShape, rotateRing } from './geometry.js';
 
@@ -455,6 +456,31 @@ function buildCrane(roofW) {
   return b.build();
 }
 
+let _starTex = null;
+function starTexture() {
+  if (_starTex) return _starTex;
+  const s = 64;
+  const c = document.createElement('canvas');
+  c.width = c.height = s;
+  const ctx = c.getContext('2d');
+  const g = ctx.createRadialGradient(s / 2, s / 2, 0, s / 2, s / 2, s / 2);
+  g.addColorStop(0, 'rgba(255,255,255,1)');
+  g.addColorStop(0.2, 'rgba(255,240,180,0.9)');
+  g.addColorStop(1, 'rgba(255,220,120,0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, s, s);
+  ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(s / 2, 2);
+  ctx.lineTo(s / 2, s - 2);
+  ctx.moveTo(2, s / 2);
+  ctx.lineTo(s - 2, s / 2);
+  ctx.stroke();
+  _starTex = new THREE.CanvasTexture(c);
+  return _starTex;
+}
+
 // ---------- the view ----------
 
 export class TowerView {
@@ -486,6 +512,43 @@ export class TowerView {
     this.pulseT = 0;
     this.roofY = 0;
     this.roofW = 40;
+    this.guideMat = createGuideMaterial(this.uniforms);
+    const gg = new THREE.PlaneGeometry(1, 1);
+    gg.translate(0, 0.5, 0);
+    this.guide = new THREE.Mesh(gg, this.guideMat);
+    this.guide.frustumCulled = false;
+    this.guide.renderOrder = 30;
+    this.guide.visible = false;
+    this.group.add(this.guide);
+    this.star = new THREE.Sprite(
+      new THREE.SpriteMaterial({ map: starTexture(), color: 0xffe27a, transparent: true, depthWrite: false, depthTest: false, sizeAttenuation: false, blending: THREE.AdditiveBlending }),
+    );
+    this.star.renderOrder = 31;
+    this.star.visible = false;
+    this.group.add(this.star);
+  }
+
+  // Show the glowing guide when the tower is only a few pixels wide on screen.
+  updateGuide(camera, viewportHeight) {
+    const H = this.height;
+    if (H < 400 || !this.tower) {
+      this.guide.visible = this.star.visible = false;
+      return;
+    }
+    const wp = this.group.position;
+    const mid = new THREE.Vector3(wp.x, wp.y + H * 0.5, wp.z);
+    const dist = Math.max(1, camera.position.distanceTo(mid));
+    const pxPerM = viewportHeight / (2 * Math.tan((camera.fov * Math.PI) / 360) * dist);
+    const towerPx = towerFootprint(this.tower) * pxPerM;
+    const op = clamp((6 - towerPx) / 4, 0, 1);
+    this.guideMat.uniforms.uOpacity.value = op * 0.9;
+    this.guide.visible = this.star.visible = op > 0.01;
+    if (!this.guide.visible) return;
+    this.guide.scale.set(5 / pxPerM, H, 1);
+    this.guide.rotation.y = Math.atan2(camera.position.x - wp.x, camera.position.z - wp.z);
+    this.star.position.set(0, H, 0);
+    this.star.scale.setScalar(0.07);
+    this.star.material.opacity = op;
   }
 
   setTower(tower, world, { dropIndex = -1 } = {}) {
@@ -653,6 +716,9 @@ export class TowerView {
     this.setCrane(false);
     this.material.dispose();
     this.depthMaterial.dispose();
+    this.guideMat.dispose();
+    this.guide.geometry.dispose();
+    this.star.material.dispose();
     this.glassMaterial.dispose();
     this.beamMaterial.dispose();
   }

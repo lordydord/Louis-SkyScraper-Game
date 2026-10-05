@@ -27,7 +27,7 @@ const PALETTES = {
     sunsetZenith: 0x3c4a8c,
     sunsetGlow: 0xffa766,
     ground: 0x56664c,
-    space: [14000, 90000],
+    space: [10000, 45000],
     fog: 3.6e-5,
     sunColorLow: 0xffa262,
     sunColorHigh: 0xfff4e2,
@@ -497,7 +497,7 @@ export class Environment {
     this.planet.scale.setScalar(this.radius);
     this.atmo.scale.setScalar(this.radius * (world === 'earth' ? 1.018 : 1.01));
     const land = world === 'earth' ? (this.place === 'dubai' ? 'sand' : 'green') : undefined;
-    this.planetMat.map = planetTexture(world, 1024, land ? { land } : {});
+    this.planetMat.map = planetTexture(world, 512, land ? { land } : {});
     this.planetMat.needsUpdate = true;
     this.atmoUniforms.uColor.value.set(world === 'mars' ? 0xd99a6a : 0x6aa8ff);
     this.clouds.visible = this.palette.clouds;
@@ -677,9 +677,9 @@ export class Environment {
     }
     this.sun.castShadow = R < 4000;
 
-    this.hemi.color.copy(su.uZenith.value).lerp(c(0xffffff), 0.6);
+    this.hemi.color.copy(su.uZenith.value).lerp(c(this.world === 'moon' ? 0x9fbfff : 0xffffff), 0.6);
     this.hemi.groundColor.copy(c(P.ground)).lerp(c(0x808080), 0.5).multiplyScalar(0.7);
-    this.hemi.intensity = lerp(0.42, 0.9, day) * (this.world === 'moon' ? 0.45 : 1);
+    this.hemi.intensity = this.world === 'moon' ? 0.55 : lerp(0.42, 0.9, day);
 
     // Fog thins out with height (most air is in the lowest ~10 km).
     this.fog.color.copy(su.uHorizon.value);
@@ -732,7 +732,7 @@ export class Environment {
     if (this._envRT) this._envRT.dispose();
     this._envRT = rt;
     this.scene.environment = rt.texture;
-    this.scene.environmentIntensity = this.world === 'moon' ? 0.45 : 1.0;
+    this.scene.environmentIntensity = this.world === 'moon' ? 0.6 : 1.0;
   }
 
   _syncCamera(target, cam) {

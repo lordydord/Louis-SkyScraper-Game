@@ -14,7 +14,7 @@ export class HeightPanel {
     this.root.innerHTML = `
       <div class="row"><span class="tower-ico">${TOWER_SVG}</span><span class="num">0</span><span class="unit">m</span></div>
       <div class="wobble"><span class="w-ico">${icon('wobble')}</span><div class="bar"><div class="needle"></div></div></div>
-      <div class="next-goal hidden"><span class="arrow">${icon('arrowUp')}</span><img alt=""><span class="gh"></span></div>`;
+      <div class="next-goal hidden"><span class="arrow">${icon('arrowUp')}</span><img alt=""><span class="gsvg"></span><span class="gh"></span></div>`;
     parent.appendChild(this.root);
     this.num = this.root.querySelector('.num');
     this.wob = this.root.querySelector('.wobble');
@@ -22,6 +22,7 @@ export class HeightPanel {
     this.goal = this.root.querySelector('.next-goal');
     this.goalImg = this.goal.querySelector('img');
     this.goalH = this.goal.querySelector('.gh');
+    this.goalSvg = this.goal.querySelector('.gsvg');
     this.shown = 0;
     this.target = 0;
     this._goalKey = null;
@@ -49,8 +50,10 @@ export class HeightPanel {
     this.goal.classList.remove('hidden');
     if (this._goalKey !== lm.key) {
       this._goalKey = lm.key;
-      this.goalImg.src = imgUrl || '';
-      this.goalImg.classList.toggle('hidden', !imgUrl);
+      const svg = imgUrl && imgUrl.startsWith('<svg');
+      this.goalImg.src = imgUrl && !svg ? imgUrl : '';
+      this.goalImg.classList.toggle('hidden', !imgUrl || svg);
+      this.goalSvg.innerHTML = svg ? imgUrl : '';
       this.goalH.textContent = formatNumber(lm.h) + ' m';
       flash(this.goal, 'pop', 400);
     }

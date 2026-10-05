@@ -94,15 +94,19 @@ export class DecorateBar {
     this.root.appendChild(this.options);
     this.root.appendChild(tabs);
     parent.appendChild(this.root);
-    this.tab = 'lights';
-    this.setTab('lights');
+    this._select('lights');
   }
 
+  // Louie tapped a tab.
   setTab(id) {
+    this._select(id);
+    if (this.onTab) this.onTab(id);
+  }
+
+  _select(id) {
     this.tab = id;
     for (const [k, b] of Object.entries(this.tabEls)) b.classList.toggle('on', k === id);
     this.render();
-    if (this.onTab) this.onTab(id);
   }
 
   _price(key, price) {

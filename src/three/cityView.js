@@ -58,7 +58,7 @@ function groundTexture(kind) {
     const y = rng() * s;
     const r = 2 + rng() * 10;
     const c = base.clone().lerp(alt, rng()).multiplyScalar(0.94 + rng() * 0.12);
-    ctx.fillStyle = `rgba(${(c.r * 255) | 0},${(c.g * 255) | 0},${(c.b * 255) | 0},0.3)`;
+    ctx.fillStyle = `rgba(${(c.r * 255) | 0},${(c.g * 255) | 0},${(c.b * 255) | 0},0.2)`;
     for (const dx of [-s, 0, s])
       for (const dy of [-s, 0, s]) {
         if (x + dx + r < 0 || x + dx - r > s || y + dy + r < 0 || y + dy - r > s) continue;
@@ -192,6 +192,8 @@ export class CityView {
           '#include <map_fragment>',
           `#include <map_fragment>
            const vec3 LW = vec3(0.299, 0.587, 0.114);
+           vec2 ruv = mat2(0.8, -0.6, 0.6, 0.8) * vMapUv * 0.43 + 0.17;
+           diffuseColor.rgb = mix(diffuseColor.rgb, texture2D(map, ruv).rgb, 0.5);
            float l1 = dot(texture2D(map, vMapUv * 0.037 + 0.31).rgb, LW) / uBaseLum;
            float l2 = dot(texture2D(map, vMapUv * 0.0071 + 0.7).rgb, LW) / uBaseLum;
            diffuseColor.rgb *= clamp(mix(1.0, l1, 0.8) * mix(1.0, l2, 0.8), 0.55, 1.6);`,
@@ -719,7 +721,11 @@ export class CityView {
   // ---------- per frame ----------
 
   update(dt) {
-    for (const tv of this.towerViews.values()) tv.update(dt);
+    const cam = this.engine.camera;
+    for (const tv of this.towerViews.values()) {
+      tv.update(dt);
+      tv.updateGuide(cam, this.engine.height);
+    }
     if (this.cars.length || this.people.length) this._updateTraffic(dt);
     for (let i = this.anims.length - 1; i >= 0; i--) {
       const a = this.anims[i];

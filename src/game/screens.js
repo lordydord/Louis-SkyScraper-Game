@@ -35,9 +35,12 @@ export class TitleScreen {
     ui.appendChild(play);
     app.uiRoot.appendChild(ui);
     this.ui = ui;
+    // Draw the inventory pictures while Louie looks at the title.
+    this._warm = setTimeout(() => app.prewarm(), 1500);
   }
 
   exit() {
+    clearTimeout(this._warm);
     this.ui.remove();
   }
 

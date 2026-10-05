@@ -335,6 +335,12 @@ body {
   filter: drop-shadow(0 0 4px rgba(150, 230, 255, 0.8));
 }
 
+.next-goal .gsvg svg {
+  width: 40px;
+  height: 40px;
+  display: block;
+}
+
 .next-goal .arrow {
   width: 20px;
   height: 20px;

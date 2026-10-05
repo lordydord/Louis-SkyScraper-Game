@@ -301,6 +301,37 @@ export function createGlassMaterial(towerUniforms, color = 0x9cc8e8) {
   return mat;
 }
 
+// A glowing line up the tower (with a star on top) that shows where it is when the
+// tower is too thin to see, e.g. a 76 m wide tower reaching into space.
+export function createGuideMaterial(towerUniforms) {
+  return new THREE.ShaderMaterial({
+    uniforms: { ...towerUniforms, uOpacity: { value: 0 } },
+    vertexShader: /* glsl */ `
+      uniform vec2 uSway;
+      uniform float uBaseY;
+      uniform float uHeight;
+      varying vec2 vUv;
+      void main() {
+        vec3 transformed = position;
+        vUv = uv;
+        ${projectVertex}
+      }`,
+    fragmentShader: /* glsl */ `
+      uniform float uOpacity;
+      varying vec2 vUv;
+      void main() {
+        float edge = 1.0 - abs(vUv.x - 0.5) * 2.0;
+        float a = smoothstep(0.0, 0.6, edge) * uOpacity;
+        gl_FragColor = vec4(vec3(1.0, 0.86, 0.35) * a, 1.0);
+      }`,
+    transparent: true,
+    depthWrite: false,
+    depthTest: false,
+    blending: THREE.AdditiveBlending,
+    side: THREE.DoubleSide,
+  });
+}
+
 // Additive light beams (rooftop spotlights), only visible at night.
 export function createBeamMaterial(globals, towerUniforms) {
   const mat = new THREE.ShaderMaterial({

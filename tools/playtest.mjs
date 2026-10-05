@@ -97,7 +97,8 @@ await shot('city-view', 4000);
 await tapEl('.tools-left .btn', 2); // lift
 await shot('lift', 3000);
 await shot('lift-top', 5000);
-await page.waitForTimeout(6000);
+await page.touchscreen.tap(560, 300); // tap to leave the lift
+await page.waitForTimeout(1500);
 await tapEl('.hud-right .btn', 1); // home
 await shot('picker-again', 2000);
 await tapEl('.portfolio-top .btn', 0);

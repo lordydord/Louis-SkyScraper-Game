@@ -108,8 +108,10 @@ const painters = {
     const n2 = makeNoise(99);
     return equirect(w, h, (x, y, z) => {
       // A bump of land where the city is (the point facing +x in this convention).
-      const cityBias = Math.max(0, x) ** 6 * 0.25;
-      const e = n(x * 1.6 + 3, y * 1.6, z * 1.6) + cityBias - 0.06;
+      const near = Math.max(0, x) ** 8;
+      let e = n(x * 1.6 + 3, y * 1.6, z * 1.6) - 0.06;
+      // Make sure the land under the city is lowland (not sea, not mountains).
+      e = e * (1 - near) + 0.56 * near;
       const lat = Math.abs(y);
       if (lat > 0.93) return [236, 242, 248];
       if (e < 0.5) {
@@ -118,7 +120,7 @@ const painters = {
       }
       const t = n2(x * 5, y * 5, z * 5);
       let c = land === 'sand' ? [214, 186, 128] : mix([72, 140, 64], [120, 150, 70], t);
-      if (land !== 'sand' && lat < 0.4 && t > 0.62) c = [200, 176, 120];
+      if (land !== 'sand' && lat < 0.4 && t > 0.74) c = [200, 176, 120];
       if (lat > 0.75) c = mix(c, [230, 236, 240], sat((lat - 0.75) * 6));
       if (e > 0.62) c = mix(c, [130, 120, 105], sat((e - 0.62) * 5));
       return c;

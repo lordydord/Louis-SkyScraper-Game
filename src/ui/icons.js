@@ -59,7 +59,15 @@ export const ICONS = {
   arrowUp: S('<path d="M12 19V5M5.5 11.5 12 5l6.5 6.5" stroke-width="3"/>'),
   arrowUpDown: S('<path d="M12 3.5v17M7 8l5-4.5L17 8M7 16l5 4.5 5-4.5" stroke-width="2.6"/>'),
   sparkle: S('<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z" fill="currentColor"/>'),
+  // Sky milestones (in colour).
+  cloud: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 18.5h10.5a4 4 0 0 0 .4-8 5.5 5.5 0 0 0-10.6-1.2A4.6 4.6 0 0 0 7 18.5z" fill="#fff" stroke="#9fb8d8" stroke-width="1.4"/></svg>`,
+  plane: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21.5 12c0-.9-.8-1.5-1.7-1.5H15L10.2 3H8l2.6 7.5H6.2L4.4 8H3l1.2 4L3 16h1.4l1.8-2.5h4.4L8 21h2.2L15 13.5h4.8c.9 0 1.7-.6 1.7-1.5z" fill="#fff" stroke="#5f7fa8" stroke-width="1"/></svg>`,
+  rocket: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5c3 2.2 4.5 5.5 4.5 9.5v4h-9v-4c0-4 1.5-7.3 4.5-9.5z" fill="#f4f6fa" stroke="#5f6f88" stroke-width="1.2"/><circle cx="12" cy="9.5" r="1.8" fill="#4f8fe8"/><path d="M7.5 12.5 5 16v2.5l2.5-1.5M16.5 12.5 19 16v2.5l-2.5-1.5" fill="#ff5a52"/><path d="M10 16.5 12 22l2-5.5z" fill="#ffb43a"/></svg>`,
+  satellite: `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9.5" y="9" width="5" height="6" rx="1" fill="#e8ecf2" stroke="#5f6f88"/><rect x="1.5" y="9.5" width="7" height="5" fill="#2f5fb8" stroke="#9fc0f0" stroke-width=".8"/><rect x="15.5" y="9.5" width="7" height="5" fill="#2f5fb8" stroke="#9fc0f0" stroke-width=".8"/><path d="M12 9V5.5M10.5 5.5h3" stroke="#c9d3e0" stroke-width="1.4"/></svg>`,
 };
+
+// Pictures for the sky milestones that have no 3D model.
+export const SKY_ICONS = { clouds: 'cloud', plane: 'plane', space: 'rocket', iss: 'satellite' };
 
 // A friendly cartoon hand pointing up-left (the fingertip is at the top-left of the
 // image) used by the wordless tutorial.
